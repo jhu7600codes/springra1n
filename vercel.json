@@ -1,0 +1,6 @@
+{
+  "name": "springra1n",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "outputDirectory": ".next"
+}
