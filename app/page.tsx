@@ -94,12 +94,15 @@ export default function Page() {
   }, [user])
 
   // start env install once setup is complete (per-login)
+  // only show env install ONCE per user (tracked in localStorage to persist across reloads)
   useEffect(() => {
     if (!user) return
     if (!setupComplete) return
 
     const key = `springra1n_env_installed_${user.id}`
-    const already = typeof window !== 'undefined' && sessionStorage.getItem(key) === '1'
+    
+    // check localStorage (persists across page reloads)
+    const already = typeof window !== 'undefined' && localStorage.getItem(key) === '1'
     if (already) {
       setEnvInstalled(true)
       setEnvInstalling(false)
@@ -183,7 +186,7 @@ export default function Page() {
       <EnvInstall
         onDone={() => {
           try {
-            sessionStorage.setItem(`springra1n_env_installed_${user.id}`, '1')
+            localStorage.setItem(`springra1n_env_installed_${user.id}`, '1')
           } catch {}
           setEnvInstalled(true)
           setEnvInstalling(false)
