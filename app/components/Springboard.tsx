@@ -3,50 +3,51 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export default function Springboard() {
+interface SpringboardProps {
+  userId: string
+}
+
+export default function Springboard({ userId }: SpringboardProps) {
   const [apps, setApps] = useState<any[]>([])
-  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
+    const fetchApps = async () => {
+      const { data } = await supabase
+        .from('apps')
+        .select('*')
+        .eq('user_id', userId)
 
-      if (session?.user) {
-        const { data } = await supabase
-          .from('apps')
-          .select('*')
-          .eq('user_id', session.user.id)
-
-        setApps(data || [])
-      }
+      setApps(data || [])
     }
 
-    getSession()
-  }, [])
+    if (userId) {
+      fetchApps()
+    }
+  }, [userId])
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-black text-white p-4 pb-20">
+      <div className="max-w-2xl mx-auto flex flex-col items-center">
         <h1 className="text-4xl font-bold mb-8 text-center">springra1n</h1>
 
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="w-full grid grid-cols-4 gap-4 mb-6">
           {apps.map((app: any) => (
             <div
               key={app.id}
-              className="aspect-square rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
+              className="aspect-square rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center cursor-pointer hover:opacity-80 transition"
             >
               <div className="text-center">
                 <div className="text-2xl mb-2">📦</div>
-                <p className="text-xs text-gray-400 truncate px-2">{app.name}</p>
+                <p className="text-xs text-gray-300 truncate px-2">{app.name}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {!user && (
-          <div className="text-center">
-            <p className="text-gray-400">sign in to see your apps</p>
+        {apps.length === 0 && (
+          <div className="w-full flex flex-col items-center justify-center py-8 text-center text-gray-500">
+            <p className="text-sm">no apps installed yet</p>
+            <p className="text-xs text-gray-600 mt-1">open springloader to discover and add apps</p>
           </div>
         )}
       </div>

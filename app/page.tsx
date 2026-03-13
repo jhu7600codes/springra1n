@@ -13,24 +13,41 @@ export default function Page() {
   const [step, setStep] = useState(0)
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
+    const handleSession = async (session: any) => {
+      const currentUser = session?.user || null
+      setUser(currentUser)
 
-      if (session?.user) {
+      if (currentUser) {
         const { data } = await supabase
           .from('devices')
           .select('setup_complete')
-          .eq('user_id', session.user.id)
+          .eq('user_id', currentUser.id)
           .single()
 
         setSetupComplete(data?.setup_complete || false)
+      } else {
+        setSetupComplete(false)
       }
 
       setLoading(false)
     }
 
-    getSession()
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      await handleSession(session)
+    }
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        handleSession(session)
+      }
+    )
+
+    getInitialSession()
+
+    return () => {
+      authListener?.subscription.unsubscribe()
+    }
   }, [])
 
   if (loading) {
@@ -95,5 +112,5 @@ export default function Page() {
     )
   }
 
-  return <Springboard />
+  return <Springboard userId={user.id} />
 }
