@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import Auth from '@/components/Auth'
 import Springboard from '@/components/Springboard'
+import EnvInstall from '@/components/EnvInstall'
 
 export default function Page() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [setupComplete, setSetupComplete] = useState(false)
+  const [envInstalling, setEnvInstalling] = useState(false)
+  const [envInstalled, setEnvInstalled] = useState(false)
   const [deviceName, setDeviceName] = useState('')
   const [step, setStep] = useState(0)
 
@@ -27,6 +30,8 @@ export default function Page() {
 
         if (!currentUser) {
           setSetupComplete(false)
+          setEnvInstalling(false)
+          setEnvInstalled(false)
           setLoading(false)
         }
       }
@@ -87,6 +92,23 @@ export default function Page() {
       cancelled = true
     }
   }, [user])
+
+  // start env install once setup is complete (per-login)
+  useEffect(() => {
+    if (!user) return
+    if (!setupComplete) return
+
+    const key = `springra1n_env_installed_${user.id}`
+    const already = typeof window !== 'undefined' && sessionStorage.getItem(key) === '1'
+    if (already) {
+      setEnvInstalled(true)
+      setEnvInstalling(false)
+      return
+    }
+
+    setEnvInstalled(false)
+    setEnvInstalling(true)
+  }, [setupComplete, user])
 
   if (loading) {
     console.log('[springra1n/page] rendering: LoadingScreen')
@@ -153,6 +175,20 @@ export default function Page() {
           )}
         </div>
       </div>
+    )
+  }
+
+  if (envInstalling && !envInstalled) {
+    return (
+      <EnvInstall
+        onDone={() => {
+          try {
+            sessionStorage.setItem(`springra1n_env_installed_${user.id}`, '1')
+          } catch {}
+          setEnvInstalled(true)
+          setEnvInstalling(false)
+        }}
+      />
     )
   }
 
