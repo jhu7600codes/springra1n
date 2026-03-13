@@ -13,44 +13,83 @@ export default function Page() {
   const [step, setStep] = useState(0)
 
   useEffect(() => {
-    const handleSession = async (session: any) => {
-      const currentUser = session?.user || null
-      setUser(currentUser)
-
-      if (currentUser) {
-        const { data } = await supabase
-          .from('devices')
-          .select('setup_complete')
-          .eq('user_id', currentUser.id)
-          .single()
-
-        setSetupComplete(data?.setup_complete || false)
-      } else {
-        setSetupComplete(false)
-      }
-
-      setLoading(false)
-    }
-
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      await handleSession(session)
-    }
+    setLoading(true)
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        handleSession(session)
+        console.log('[springra1n/page] onAuthStateChange fired', {
+          hasSession: !!session,
+          userId: session?.user?.id,
+        })
+
+        const currentUser = session?.user || null
+        setUser(currentUser)
+
+        if (!currentUser) {
+          setSetupComplete(false)
+          setLoading(false)
+        }
       }
     )
-
-    getInitialSession()
 
     return () => {
       authListener?.subscription.unsubscribe()
     }
   }, [])
 
+  // fetch device / setup state whenever user changes,
+  // outside of the auth callback to avoid supabase lock contention
+  useEffect(() => {
+    if (!user) return
+
+    let cancelled = false
+
+    const fetchDeviceSetup = async () => {
+      console.log('[springra1n/page] fetchDeviceSetup for user', {
+        userId: user.id,
+      })
+
+      try {
+        const { data, error } = await supabase
+          .from('devices')
+          .select('setup_complete')
+          .eq('user_id', user.id)
+          .single()
+
+        if (error) {
+          console.error('[springra1n/page] error fetching devices', error)
+        }
+
+        if (cancelled) return
+
+        const complete = !!data?.setup_complete
+        console.log('[springra1n/page] setup_complete from DB', {
+          setup_complete: data?.setup_complete,
+          resolved: complete,
+        })
+        setSetupComplete(complete)
+      } catch (err) {
+        if (!cancelled) {
+          console.error('[springra1n/page] unexpected devices fetch error', err)
+          setSetupComplete(false)
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    setLoading(true)
+    fetchDeviceSetup()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
   if (loading) {
+    console.log('[springra1n/page] rendering: LoadingScreen')
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <p>loading...</p>
@@ -59,10 +98,15 @@ export default function Page() {
   }
 
   if (!user) {
+    console.log('[springra1n/page] rendering: Auth (no user)')
     return <Auth />
   }
 
   if (!setupComplete) {
+    console.log('[springra1n/page] rendering: SetupWizard', {
+      userId: user.id,
+      setupComplete,
+    })
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <div className="w-full max-w-sm">
@@ -112,5 +156,9 @@ export default function Page() {
     )
   }
 
+  console.log('[springra1n/page] rendering: Springboard', {
+    userId: user.id,
+    setupComplete,
+  })
   return <Springboard userId={user.id} />
 }
