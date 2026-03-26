@@ -287,29 +287,31 @@ export default function Springboard({ userId }: SpringboardProps) {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 pb-6 pt-4 bg-black/30 backdrop-blur-xl">
+      <div className="fixed bottom-0 left-0 right-0 pb-6 pt-4">
         <div className="max-w-md mx-auto">
-          <div className="flex justify-center gap-8 px-6">
-            <button 
-              type="button"
-              className="flex flex-col items-center gap-1 group"
-              onClick={() => router.push('/springloader')}
-            >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-700/80 to-gray-800/80 backdrop-blur shadow-lg flex items-center justify-center text-xl group-active:scale-95 transition-transform">
-                📦
-              </div>
-              <span className="text-[10px] text-white/80">Apps</span>
-            </button>
-            <button 
-              type="button"
-              className="flex flex-col items-center gap-1 group"
-              onClick={() => router.push('/settings')}
-            >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-700/80 to-gray-800/80 backdrop-blur shadow-lg flex items-center justify-center text-xl group-active:scale-95 transition-transform">
-                ⚙️
-              </div>
-              <span className="text-[10px] text-white/80">Settings</span>
-            </button>
+          <div className="bg-gray-900/70 backdrop-blur-xl rounded-[2rem] py-3 px-2">
+            <div className="flex justify-center gap-6">
+              <button 
+                type="button"
+                className="flex flex-col items-center gap-1 group"
+                onClick={() => router.push('/springloader')}
+              >
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-600/60 to-gray-700/60 backdrop-blur shadow-lg flex items-center justify-center text-xl group-active:scale-95 transition-transform">
+                  📦
+                </div>
+                <span className="text-[10px] text-white/80">Apps</span>
+              </button>
+              <button 
+                type="button"
+                className="flex flex-col items-center gap-1 group"
+                onClick={() => router.push('/settings')}
+              >
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-600/60 to-gray-700/60 backdrop-blur shadow-lg flex items-center justify-center text-xl group-active:scale-95 transition-transform">
+                  ⚙️
+                </div>
+                <span className="text-[10px] text-white/80">Settings</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

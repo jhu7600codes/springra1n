@@ -116,8 +116,14 @@ export default function Page() {
   if (loading) {
     console.log('[springra1n/page] rendering: LoadingScreen')
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>loading...</p>
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+        <div className="text-4xl mb-4">🍎</div>
+        <div className="flex gap-1.5">
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
+        <p className="text-gray-500 text-sm mt-4">loading springra1n...</p>
       </div>
     )
   }
@@ -133,49 +139,64 @@ export default function Page() {
       setupComplete,
     })
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="w-full max-w-sm">
-          <h1 className="text-2xl font-bold mb-8 text-center">setup springra1n</h1>
-
+      <div className="min-h-screen bg-black text-white flex flex-col">
+        <div className="flex-1 flex flex-col items-center justify-center p-8">
+          <div className="text-6xl mb-6">🍎</div>
+          
           {step === 0 && (
-            <div className="space-y-4">
-              <p className="text-gray-400 mb-4">welcome to springra1n</p>
+            <div className="text-center max-w-xs">
+              <h1 className="text-3xl font-semibold mb-4">Welcome to springra1n</h1>
+              <p className="text-gray-400 text-lg">
+                Your iOS container environment on the web.
+              </p>
               <button
                 onClick={() => setStep(1)}
-                className="w-full bg-blue-600 hover:bg-blue-700 rounded py-2 font-semibold"
+                className="mt-8 w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-full py-3 font-semibold text-lg transition-all"
               >
-                next
+                Get Started
               </button>
             </div>
           )}
 
           {step === 1 && (
-            <div className="space-y-4">
-              <label className="block text-sm text-gray-400">device name</label>
+            <div className="text-center max-w-xs w-full">
+              <h2 className="text-2xl font-semibold mb-6">Name Your Device</h2>
               <input
                 type="text"
                 value={deviceName}
                 onChange={(e) => setDeviceName(e.target.value)}
-                placeholder="my iphone"
-                className="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white"
+                placeholder="My iPhone"
+                className="w-full bg-gray-900/80 border border-gray-700 rounded-xl px-4 py-4 text-lg text-white placeholder-gray-500 text-center focus:outline-none focus:border-blue-500 transition-colors"
+                autoFocus
               />
+              <p className="text-gray-500 text-sm mt-3">
+                This will be displayed on your springboard.
+              </p>
               <button
                 onClick={async () => {
-                  if (deviceName) {
+                  if (deviceName.trim()) {
                     await supabase.from('devices').insert({
                       user_id: user.id,
-                      device_name: deviceName,
+                      device_name: deviceName.trim(),
                       setup_complete: true,
                     })
                     setSetupComplete(true)
                   }
                 }}
-                className="w-full bg-blue-600 hover:bg-blue-700 rounded py-2 font-semibold"
+                disabled={!deviceName.trim()}
+                className="mt-8 w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-full py-3 font-semibold text-lg transition-all"
               >
-                finish
+                Continue
               </button>
             </div>
           )}
+        </div>
+
+        <div className="pb-8 flex justify-center">
+          <div className="flex gap-2">
+            <div className={`w-2 h-2 rounded-full ${step === 0 ? 'bg-blue-500' : 'bg-gray-600'}`} />
+            <div className={`w-2 h-2 rounded-full ${step === 1 ? 'bg-blue-500' : 'bg-gray-600'}`} />
+          </div>
         </div>
       </div>
     )

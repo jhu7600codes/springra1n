@@ -329,6 +329,17 @@ export default function SettingsPage() {
               springra1n · web springboard with jailbroken-style customization
             </div>
           </section>
+
+          <button
+            type="button"
+            onClick={async () => {
+              await supabase.auth.signOut()
+              window.location.href = '/'
+            }}
+            className="w-full bg-red-900/50 hover:bg-red-900 border border-red-800 rounded-xl py-3 font-semibold text-red-400 transition-colors"
+          >
+            sign out
+          </button>
         </div>
       </div>
 
