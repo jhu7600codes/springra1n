@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 
 export default function Auth() {
   const [email, setEmail] = useState('')
@@ -9,6 +10,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [error, setError] = useState('')
+  const router = useRouter()
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,6 +34,10 @@ export default function Auth() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGuest = () => {
+    router.push('/?guest=true')
   }
 
   return (
@@ -93,6 +99,18 @@ export default function Auth() {
         >
           {isSignUp ? 'already have an account? sign in' : "don't have an account? sign up"}
         </button>
+
+        <div className="mt-8 pt-6 border-t border-gray-800">
+          <button
+            onClick={handleGuest}
+            className="w-full bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-xl py-3 font-medium text-gray-300 transition-colors"
+          >
+            continue as guest
+          </button>
+          <p className="text-xs text-gray-600 text-center mt-2">
+            Guest mode has limited features
+          </p>
+        </div>
 
         <div className="mt-8 text-center text-xs text-gray-600">
           springra1n · web springboard environment

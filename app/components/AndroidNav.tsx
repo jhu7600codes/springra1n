@@ -5,10 +5,11 @@ import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 interface AndroidNavProps {
+  isGuest?: boolean
   onMenuOpen?: () => void
 }
 
-export default function AndroidNav({ onMenuOpen }: AndroidNavProps) {
+export default function AndroidNav({ isGuest, onMenuOpen }: AndroidNavProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -25,16 +26,18 @@ export default function AndroidNav({ onMenuOpen }: AndroidNavProps) {
       { id: 'home', label: 'Home', action: () => router.push('/') },
       { id: 'springloader', label: 'Springloader', action: () => router.push('/springloader') },
       { id: 'settings', label: 'Settings', action: () => router.push('/settings') },
-      {
-        id: 'signout',
-        label: 'Sign out',
-        action: async () => {
-          await supabase.auth.signOut()
-          router.push('/')
-        },
-      },
+      ...(isGuest
+        ? [{ id: 'signin', label: 'Sign In', action: () => router.push('/') }]
+        : [{
+            id: 'signout',
+            label: 'Sign out',
+            action: async () => {
+              await supabase.auth.signOut()
+              router.push('/')
+            },
+          }]),
     ],
-    [router]
+    [router, isGuest]
   )
 
   return (

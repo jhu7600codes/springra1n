@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 
 interface SpringboardProps {
   userId: string
+  isGuest?: boolean
 }
 
 type CoreAppType = 'route' | 'url' | 'scheme'
@@ -97,7 +98,7 @@ function AppIcon({
   )
 }
 
-export default function Springboard({ userId }: SpringboardProps) {
+export default function Springboard({ userId, isGuest }: SpringboardProps) {
   const [apps, setApps] = useState<any[]>([])
   const [wallpaperStyle, setWallpaperStyle] = useState<React.CSSProperties>({
     backgroundColor: 'black',
@@ -115,6 +116,8 @@ export default function Springboard({ userId }: SpringboardProps) {
   }, [])
 
   useEffect(() => {
+    if (isGuest) return
+
     const fetchApps = async () => {
       console.log('[springra1n/springboard] fetchApps for user', { userId })
       const { data, error } = await supabase
@@ -136,7 +139,7 @@ export default function Springboard({ userId }: SpringboardProps) {
 
     let cancelled = false
 
-    if (userId) {
+    if (userId && userId !== 'guest') {
       console.log('[springra1n/springboard] useEffect userId set, fetching apps')
       fetchApps()
     }
@@ -144,9 +147,11 @@ export default function Springboard({ userId }: SpringboardProps) {
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, isGuest])
 
   useEffect(() => {
+    if (isGuest) return
+
     let cancelled = false
 
     const fetchWallpaper = async () => {
@@ -195,7 +200,7 @@ export default function Springboard({ userId }: SpringboardProps) {
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, isGuest])
 
   const combinedApps = useMemo(() => {
     return [

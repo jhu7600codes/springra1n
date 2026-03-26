@@ -8,6 +8,7 @@ import { catalogApps, type CatalogApp } from './catalog'
 export default function SpringLoader() {
   const [installed, setInstalled] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
+  const [isGuest, setIsGuest] = useState(false)
   const [tab, setTab] = useState<'browse' | 'installed'>('browse')
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<CatalogApp | null>(null)
@@ -17,15 +18,20 @@ export default function SpringLoader() {
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user || null)
-
+      
       if (session?.user) {
+        setUser(session.user)
         const { data } = await supabase
           .from('sideload_apps')
           .select('*')
           .eq('user_id', session.user.id)
 
         setInstalled(data || [])
+      } else {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('guest') === 'true') {
+          setIsGuest(true)
+        }
       }
     }
 
@@ -33,7 +39,7 @@ export default function SpringLoader() {
   }, [])
 
   const refreshInstalled = async () => {
-    if (!user) return
+    if (!user || isGuest) return
     const { data } = await supabase
       .from('sideload_apps')
       .select('*')
@@ -42,7 +48,7 @@ export default function SpringLoader() {
   }
 
   const installFromCatalog = async (app: CatalogApp) => {
-    if (!user) return
+    if (!user || isGuest) return
     setBusy(true)
     try {
       const { error } = await supabase.from('sideload_apps').insert({
@@ -59,7 +65,7 @@ export default function SpringLoader() {
   }
 
   const uninstall = async (id: string) => {
-    if (!user) return
+    if (!user || isGuest) return
     setBusy(true)
     try {
       const { error } = await supabase
@@ -75,7 +81,7 @@ export default function SpringLoader() {
   }
 
   const addCustomUrl = async () => {
-    if (!addingUrl || !user) return
+    if (!addingUrl || !user || isGuest) return
     setBusy(true)
     try {
       const nameGuess =
@@ -145,6 +151,14 @@ export default function SpringLoader() {
             </button>
           </div>
         </div>
+
+        {isGuest && (
+          <div className="bg-yellow-900/20 border border-yellow-800 rounded-xl px-4 py-3 mb-4">
+            <p className="text-sm text-yellow-400">
+              Guest mode: Sign in to install packages
+            </p>
+          </div>
+        )}
 
         <div className="bg-gray-950 border border-gray-800 rounded-xl p-4 mb-4">
           <div className="text-xs text-gray-400 mb-2">search</div>
@@ -311,7 +325,7 @@ export default function SpringLoader() {
         )}
       </div>
 
-      <AndroidNav />
+      <AndroidNav isGuest={isGuest} />
     </div>
   )
 }

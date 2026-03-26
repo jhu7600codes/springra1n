@@ -14,6 +14,7 @@ export default function Page() {
   const [envInstalled, setEnvInstalled] = useState(false)
   const [deviceName, setDeviceName] = useState('')
   const [step, setStep] = useState(0)
+  const [isGuest, setIsGuest] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -39,6 +40,17 @@ export default function Page() {
 
     return () => {
       authListener?.subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('guest') === 'true') {
+      const guestUser = { id: 'guest', email: 'guest@springra1n.app' }
+      setUser(guestUser)
+      setIsGuest(true)
+      setSetupComplete(true)
+      setLoading(false)
     }
   }, [])
 
@@ -220,5 +232,5 @@ export default function Page() {
     userId: user.id,
     setupComplete,
   })
-  return <Springboard userId={user.id} />
+  return <Springboard userId={user.id} isGuest={isGuest} />
 }

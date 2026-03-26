@@ -15,6 +15,7 @@ const defaultWallpapers = [
 
 export default function SettingsPage() {
   const [userId, setUserId] = useState<string | null>(null)
+  const [isGuest, setIsGuest] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [deviceName, setDeviceName] = useState('')
@@ -49,11 +50,21 @@ export default function SettingsPage() {
     const init = async () => {
       const { data } = await supabase.auth.getSession()
       const uid = data.session?.user?.id || null
-      setUserId(uid)
+      
       if (!uid) {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('guest') === 'true') {
+          setIsGuest(true)
+          setUserId('guest')
+          setDeviceName('Guest iPhone')
+          setLoading(false)
+          return
+        }
         setLoading(false)
         return
       }
+
+      setUserId(uid)
 
       const { data: device, error } = await supabase
         .from('devices')
@@ -76,8 +87,6 @@ export default function SettingsPage() {
         setColorHex(device.wallpaper_value)
       }
       if (wt === 'gradient' && typeof device?.wallpaper_value === 'string') {
-        // keep the raw CSS string as the persisted source of truth
-        // user edits build a new CSS string; no parsing required.
       }
 
       setLoading(false)
@@ -96,7 +105,7 @@ export default function SettingsPage() {
   }
 
   const save = async () => {
-    if (!userId) return
+    if (!userId || isGuest) return
     setSaving(true)
     try {
       let nextValue = wallpaperValue
@@ -109,7 +118,6 @@ export default function SettingsPage() {
         nextValue = computedGradient
         nextImageUrl = ''
       } else if (wallpaperType === 'image') {
-        // prefer wallpaper_image_url when set
         nextImageUrl = wallpaperImageUrl || ''
       }
 
@@ -151,14 +159,17 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-black text-white p-4 pb-20">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">settings</h1>
+          <div>
+            <h1 className="text-3xl font-bold">settings</h1>
+            {isGuest && <p className="text-xs text-gray-500 mt-1">Guest Mode</p>}
+          </div>
           <button
             type="button"
             onClick={save}
-            disabled={saving}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 py-2 rounded font-semibold"
+            disabled={saving || isGuest}
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded font-semibold"
           >
-            {saving ? 'saving…' : 'save'}
+            {isGuest ? 'sign in to save' : saving ? 'saving…' : 'save'}
           </button>
         </div>
 
@@ -343,7 +354,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <AndroidNav />
+      <AndroidNav isGuest={isGuest} />
     </div>
   )
 }
