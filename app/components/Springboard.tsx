@@ -3,7 +3,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import AndroidNav from '@/components/AndroidNav'
 
 interface SpringboardProps {
   userId: string
@@ -15,6 +14,7 @@ interface CoreApp {
   id: string
   name: string
   icon: string
+  iconBg: string
   type: CoreAppType
   target: string
 }
@@ -22,40 +22,97 @@ interface CoreApp {
 const coreApps: CoreApp[] = [
   {
     id: 'springloader',
-    name: 'springloader',
+    name: 'Springloader',
     icon: '📦',
+    iconBg: 'from-amber-500 to-orange-600',
     type: 'route',
     target: '/springloader',
   },
   {
     id: 'settings',
-    name: 'settings',
+    name: 'Settings',
     icon: '⚙️',
+    iconBg: 'from-gray-400 to-gray-600',
     type: 'route',
     target: '/settings',
   },
   {
     id: 'livecontainer',
-    name: 'livecontainer',
+    name: 'LiveContainer',
     icon: '📲',
+    iconBg: 'from-blue-500 to-cyan-600',
     type: 'scheme',
     target: 'livecontainer://',
   },
   {
     id: 'springra1n-web',
-    name: 'web app',
+    name: 'Web',
     icon: '🌐',
+    iconBg: 'from-indigo-500 to-purple-600',
     type: 'url',
     target: 'https://springra1n.app',
   },
 ]
+
+function getCurrentTime() {
+  const now = new Date()
+  const hours = now.getHours()
+  const minutes = now.getMinutes().toString().padStart(2, '0')
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const displayHours = hours % 12 || 12
+  return `${displayHours}:${minutes} ${ampm}`
+}
+
+function getCurrentDate() {
+  const now = new Date()
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`
+}
+
+function AppIcon({ 
+  icon, 
+  iconBg, 
+  label, 
+  onClick 
+}: { 
+  icon: string
+  iconBg: string
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-1 group"
+    >
+      <div className={`w-[64px] h-[64px] rounded-[18px] bg-gradient-to-br ${iconBg} shadow-lg flex items-center justify-center text-2xl relative overflow-hidden group-active:scale-95 transition-transform`}>
+        <div className="absolute inset-0 bg-white/20" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 25%, 0 50%)' }} />
+      </div>
+      <span className="text-[12px] text-white font-medium text-shadow-sm max-w-[70px] truncate px-1">
+        {label}
+      </span>
+    </button>
+  )
+}
 
 export default function Springboard({ userId }: SpringboardProps) {
   const [apps, setApps] = useState<any[]>([])
   const [wallpaperStyle, setWallpaperStyle] = useState<React.CSSProperties>({
     backgroundColor: 'black',
   })
+  const [currentTime, setCurrentTime] = useState(getCurrentTime())
+  const [currentDate, setCurrentDate] = useState(getCurrentDate())
   const router = useRouter()
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(getCurrentTime())
+      setCurrentDate(getCurrentDate())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const fetchApps = async () => {
@@ -141,7 +198,6 @@ export default function Springboard({ userId }: SpringboardProps) {
   }, [userId])
 
   const combinedApps = useMemo(() => {
-    // core apps are always available; user apps are from DB
     return [
       ...coreApps.map((a) => ({ kind: 'core' as const, data: a })),
       ...apps.map((a) => ({ kind: 'user' as const, data: a })),
@@ -162,43 +218,60 @@ export default function Springboard({ userId }: SpringboardProps) {
     appCount: apps.length,
   })
 
-  return (
-    <div className="min-h-screen text-white p-4 pb-20" style={wallpaperStyle}>
-      <div className="max-w-2xl mx-auto flex flex-col items-center">
-        <h1 className="text-4xl font-bold mb-4 text-center">springra1n</h1>
-        <p className="text-xs text-gray-500 mb-6 text-center">
-          tap an app to open it. use springloader to add more.
-        </p>
+  const coreAppIcons = coreApps.map(app => app.icon)
+  const hasMatchingUserApps = apps.length > 3
 
-        <div className="w-full grid grid-cols-4 gap-4 mb-6">
-          {combinedApps.map((item) => {
+  return (
+    <div className="min-h-screen text-white" style={wallpaperStyle}>
+      <div className="pt-12 pb-24 px-6 max-w-md mx-auto">
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <div className="text-4xl font-light tracking-wide">{currentTime}</div>
+            <div className="text-sm font-medium opacity-80 mt-1">{currentDate}</div>
+          </div>
+          <div className="flex gap-1.5">
+            <div className="w-6 h-3 border border-white/60 rounded-sm" />
+            <div className="w-6 h-3 border border-white/60 rounded-sm" />
+            <div className="w-6 h-3 border border-white/60 rounded-sm" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-x-4 gap-y-6">
+          {combinedApps.slice(0, hasMatchingUserApps ? 16 : 20).map((item, index) => {
             if (item.kind === 'core') {
               const app = item.data
               return (
-                <button
+                <AppIcon
                   key={`core-${app.id}`}
-                  type="button"
+                  icon={app.icon}
+                  iconBg={app.iconBg}
+                  label={app.name}
                   onClick={() => handleCoreAppOpen(app)}
-                  className="aspect-square rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur flex items-center justify-center cursor-pointer hover:opacity-90 transition border border-white/5"
-                >
-                  <div className="text-center">
-                    <div className="text-2xl mb-2">{app.icon}</div>
-                    <p className="text-[11px] text-gray-100 truncate px-2">
-                      {app.name}
-                    </p>
-                  </div>
-                </button>
+                />
               )
             }
 
             const app: any = item.data
-            const appName = app.name || app.app_name || 'app'
+            const appName = app.name || app.app_name || 'App'
             const url = app.url || app.app_url || ''
+            const bgColors = [
+              'from-pink-500 to-rose-600',
+              'from-violet-500 to-purple-600',
+              'from-emerald-500 to-green-600',
+              'from-amber-500 to-yellow-600',
+              'from-cyan-500 to-teal-600',
+              'from-fuchsia-500 to-pink-600',
+              'from-orange-500 to-red-600',
+              'from-lime-500 to-emerald-600',
+            ]
+            const colorIndex = index % bgColors.length
 
             return (
-              <button
+              <AppIcon
                 key={`user-${app.id}`}
-                type="button"
+                icon="📱"
+                iconBg={bgColors[colorIndex]}
+                label={appName}
                 onClick={() => {
                   if (typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://'))) {
                     router.push(`/app/${app.id}`)
@@ -208,30 +281,42 @@ export default function Springboard({ userId }: SpringboardProps) {
                     console.warn('[springra1n/springboard] app has no openable url', app)
                   }
                 }}
-                className="aspect-square rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur flex items-center justify-center cursor-pointer hover:opacity-90 transition border border-white/5"
-              >
-                <div className="text-center">
-                  <div className="text-2xl mb-2">📱</div>
-                  <p className="text-[11px] text-gray-200 truncate px-2">
-                    {appName}
-                  </p>
-                </div>
-              </button>
+              />
             )
           })}
         </div>
-
-        {apps.length === 0 && (
-          <div className="w-full flex flex-col items-center justify-center py-4 text-center text-gray-500">
-            <p className="text-sm">no user apps installed yet</p>
-            <p className="text-xs text-gray-600 mt-1">
-              open springloader to sideload apps via urls.
-            </p>
-          </div>
-        )}
       </div>
 
-      <AndroidNav />
+      <div className="fixed bottom-0 left-0 right-0 pb-6 pt-4 bg-black/30 backdrop-blur-xl">
+        <div className="max-w-md mx-auto">
+          <div className="flex justify-center gap-8 px-6">
+            <button 
+              type="button"
+              className="flex flex-col items-center gap-1 group"
+              onClick={() => router.push('/springloader')}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-700/80 to-gray-800/80 backdrop-blur shadow-lg flex items-center justify-center text-xl group-active:scale-95 transition-transform">
+                📦
+              </div>
+              <span className="text-[10px] text-white/80">Apps</span>
+            </button>
+            <button 
+              type="button"
+              className="flex flex-col items-center gap-1 group"
+              onClick={() => router.push('/settings')}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-700/80 to-gray-800/80 backdrop-blur shadow-lg flex items-center justify-center text-xl group-active:scale-95 transition-transform">
+                ⚙️
+              </div>
+              <span className="text-[10px] text-white/80">Settings</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 h-8 flex justify-center items-end pb-2 z-50">
+        <div className="w-32 h-1.5 bg-white/80 rounded-full" />
+      </div>
     </div>
   )
 }
